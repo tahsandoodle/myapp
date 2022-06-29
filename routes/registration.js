@@ -3,34 +3,32 @@ var router = express.Router();
 var Registration = require("../models/registration");
 var crypto = require("crypto");
 
-var isEmailExist = true;
-router.get("/:email", function (req, res, next) {
-  const email = req.params["email"];
+// function isEmailExist(data) {
+//      return data;
+//   }
 
-  Registration.findOne({ email: email }).then((mail) => {
-    // console.log("eeeeeeeeeeeeemail", mail);
-    if (!mail) {
-       isEmailExist = false;
+// router.post("/", function (req, res, next) {
+//   const email= req.body["email"]
 
-      res.status(404).send({
-        status: 404,
-        message: "No found.",
-      });
+//   Registration.findOne({ email: email }).then((mail) => {
+//      console.log("eeeeeeeeeeeeemail", mail);
+//     if (!mail) {
+//         isEmailExist(false)
 
-    }
-    else{
-        isEmailExist = true;
-        res.status(200).send({
-            status: 200,
-            message: "Email is exist",
-            email: email,
-          });
-        
-    }
-    
-  });
-});
-console.log("isEmailExist",isEmailExist)
+//       res.status(404).send({
+//         status: 404,
+//         message: "No found.",
+//       });
+//     } else {
+//         isEmailExist(true)
+//       res.status(200).send({
+//         status: 200,
+//         message: "Email is exist",
+//         email: email,
+//       });
+//     }
+//   });
+// });
 
 function generateHash(password) {
   const hash = crypto.createHash("sha512");
@@ -49,34 +47,39 @@ router.post("/", function (req, res, next) {
     });
   }
   const hashedPassword = generateHash(password);
-  const registration = new Registration({
-    name: req.body["name"],
-    email: req.body["email"],
-    hashedPassword: hashedPassword,
-  });
-  registration
-    .save()
-    .then(() => {
-      res.status(200).send({
-        status: 200,
-        message: "Registration complated successfully",
-        registration: registration,
+
+  const email = req.body["email"];
+
+  Registration.findOne({ email: email }).then((mail) => {
+    console.log("eeeeeeeeeeeeemail", mail);
+    if (!mail) {
+      const registration = new Registration({
+        name: req.body["name"],
+        email: req.body["email"],
+        hashedPassword: hashedPassword,
       });
-    })
-    .catch((error) => {
-      console.log("errrrrrrrrrrrrrrrrrr", error);
-      //if email already exist
-      //   if (error.code === 11000) {
-      //     res.status(400).send({
-      //       status: 400,
-      //       message: `Email id is already used.`,
-      //     });
-      //   }
-      //   res.status(500).send({
-      //     status: 500,
-      //     message: `Registration process failed unexpectedly.`,
-      //   });
-    });
+      registration
+        .save()
+        .then(() => {
+          res.status(200).send({
+            status: 200,
+            message: "Registration complated successfully",
+            registration: registration,
+          });
+        })
+        .catch((error) => {
+          res.status(500).send({
+            status: 500,
+            message: `Registration process failed unexpectedly.`,
+          });
+        });
+    } else {
+        res.send({
+        message: "Email already exist",
+        email: email,
+      });
+    }
+  });
 });
 
 module.exports = router;
